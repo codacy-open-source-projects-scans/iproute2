@@ -45,8 +45,12 @@ devlink-dev \- devlink device configuration
 .I DEV
 .B name
 .I PARAMETER
+[
 .B value
 .I VALUE
+|
+.B default
+]
 .BR cmode " { " runtime " | " driverinit " | " permanent " } "
 
 .ti -8
@@ -127,7 +131,7 @@ Set eswitch mode
 
 .TP
 .BR inline-mode " { " none " | " link " | " network " | " transport " } "
-Some HWs need the VF driver to put part of the packet headers on the TX descriptor so the e-switch can do proper matching and steering.
+Some hardware devices need the VF driver to put part of the packet headers on the TX descriptor so the e-switch can do proper matching and steering.
 
 .I none
 - None
@@ -159,7 +163,13 @@ Specify parameter name to set.
 
 .TP
 .BI value " VALUE"
-New value to set.
+New value to set. Mutually exclusive with
+.BR default .
+
+.TP
+.B default
+Restore parameter to its default value. Mutually exclusive with
+.BR value .
 
 .TP
 .BR cmode " { " runtime " | " driverinit " | " permanent " } "
@@ -169,17 +179,20 @@ Configuration mode in which the new value is set.
 - Set new value while driver is running. This configuration mode doesn't require any reset to apply the new value.
 
 .I driverinit
-- Set new value which will be applied during driver initialization. This configuration mode requires restart driver by devlink reload command to apply the new value.
+- Set new value which will be applied during driver initialization. This configuration mode requires restarting the driver by devlink reload command to apply the new value.
 
 .I permanent
 - New value is written to device's non-volatile memory. This configuration mode requires hard reset to apply the new value.
 
 .SS devlink dev param show - display devlink device supported configuration parameters attributes
 
+.TP
 .B name
 .I PARAMETER
 Specify parameter name to show.
 If this argument is omitted all parameters supported by devlink devices are listed.
+When the kernel provides a default value for a parameter, it will be automatically displayed
+in the output alongside the current value.
 
 .SS devlink dev reload - perform hot reload of the driver.
 
@@ -198,9 +211,9 @@ If this argument is omitted
 action will be used.
 Note that even though user asks for a specific action, the driver implementation
 might require to perform another action alongside with it. For example, some
-driver do not support driver reinitialization being performed without fw
+drivers do not support driver reinitialization being performed without fw
 activation. Therefore, the devlink reload command returns the list of actions
-which were actrually performed.
+which were actually performed.
 
 .I driver_reinit
 - Driver entities re-initialization, applying devlink-param and
@@ -309,12 +322,17 @@ Sets the eswitch mode of specified devlink device to switchdev.
 .PP
 devlink dev param show pci/0000:01:00.0 name max_macs
 .RS 4
-Shows the parameter max_macs attributes.
+Shows the parameter max_macs attributes. If a default value exists, it will be displayed alongside the current value.
 .RE
 .PP
 devlink dev param set pci/0000:01:00.0 name internal_error_reset value true cmode runtime
 .RS 4
 Sets the parameter internal_error_reset of specified devlink device to true.
+.RE
+.PP
+devlink dev param set pci/0000:01:00.0 name internal_error_reset default cmode runtime
+.RS 4
+Restores the parameter internal_error_reset of specified devlink device to its default value.
 .RE
 .PP
 devlink dev reload pci/0000:01:00.0
